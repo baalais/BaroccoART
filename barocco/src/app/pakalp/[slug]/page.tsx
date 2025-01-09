@@ -95,3 +95,36 @@
 // };
 
 // export default ServicePage;
+
+
+'use client'; // Ensure this file is marked as a client component
+
+import React from 'react';
+
+interface ServicePageProps {
+  params: Promise<{ slug: string }>;
+}
+
+const ServicePage: React.FC<ServicePageProps> = ({ params }) => {
+  // For now, we are not using `slug` and no dynamic content
+  return (
+    <div className="min-h-screen py-8 px-4 bg-gray-50">
+      <div className="max-w-7xl mx-auto">
+        {/* Title and description */}
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold mb-2">Service Page</h1>
+          <p className="text-gray-600">This is a placeholder for the service details.</p>
+        </div>
+
+        {/* Placeholder content for photos or service details */}
+        <div className="grid grid-cols-3 gap-4">
+          <div className="w-full h-48 bg-gray-200 rounded-md"></div>
+          <div className="w-full h-48 bg-gray-200 rounded-md"></div>
+          <div className="w-full h-48 bg-gray-200 rounded-md"></div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ServicePage;
