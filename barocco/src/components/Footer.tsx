@@ -12,7 +12,7 @@ const Footer: React.FC = () => {
         >
           WhatsApp
         </a>
-        <p className="mt-4 text-sm">© Barocco Art 2023</p>
+        <p className="mt-4 text-sm">© Barocco Art 2025</p>
       </div>
     </footer>
   );

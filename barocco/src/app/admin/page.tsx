@@ -3,42 +3,61 @@ import React, { useState } from "react";
 
 const AdminPage: React.FC = () => {
   const [formData, setFormData] = useState({
-    slug: "privatmajas", // Default category
+    slug: "privatmajas",
     title: "",
     description: "",
   });
 
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setUploadedFiles(Array.from(e.target.files)); // Save uploaded files in state
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Prepare form data
+    // Create form data
     const formDataToSend = new FormData();
     formDataToSend.append("slug", formData.slug);
     formDataToSend.append("title", formData.title);
     formDataToSend.append("description", formData.description);
 
-    // Append files to the form data
+    // Validate and append files
     uploadedFiles.forEach((file, index) => {
-      formDataToSend.append(`images[${index}]`, file);
+      if (!file.type.startsWith("image/")) {
+        alert(`${file.name} is not a valid image.`);
+        return;
+      }
+      formDataToSend.append(`images`, file); // Appending images with same key
     });
 
-    const response = await fetch("/api/services", {
-      method: "POST",
-      body: formDataToSend, // Send the FormData object
-    });
+    try {
+      // Debugging the FormData
+      for (const [key, value] of formDataToSend.entries()) {
+        console.log(key, value);
+      }
 
-    if (response.ok) {
-      alert("Service updated!");
-    } else {
-      alert("Failed to update service.");
+      const response = await fetch("/api/services", {
+        method: "POST",
+        body: formDataToSend,
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        alert("Service updated!");
+        console.log("Saved files:", data.files);
+      } else {
+        const errorData = await response.json();
+        console.error("Error:", errorData);
+        alert("Failed to update service.");
+      }
+    } catch (err) {
+      console.error("Request failed:", err);
+      alert("An error occurred. Please try again.");
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const filesArray = Array.from(e.target.files);
+      setUploadedFiles(filesArray);
     }
   };
 
@@ -46,7 +65,6 @@ const AdminPage: React.FC = () => {
     <div className="flex flex-col items-center py-16 px-4">
       <h1 className="text-2xl font-bold mb-4">Admin Panel</h1>
       <form onSubmit={handleSubmit} className="space-y-4 max-w-md w-full">
-        {/* Dropdown for category */}
         <label className="block text-sm font-medium">
           Category
           <select
@@ -61,7 +79,6 @@ const AdminPage: React.FC = () => {
           </select>
         </label>
 
-        {/* Title input */}
         <input
           type="text"
           placeholder="Title"
@@ -70,7 +87,6 @@ const AdminPage: React.FC = () => {
           className="w-full p-2 border rounded"
         />
 
-        {/* Description input */}
         <textarea
           placeholder="Description"
           value={formData.description}
@@ -80,7 +96,6 @@ const AdminPage: React.FC = () => {
           className="w-full p-2 border rounded"
         />
 
-        {/* File upload input */}
         <label className="block text-sm font-medium">
           Upload Images
           <input
@@ -92,7 +107,6 @@ const AdminPage: React.FC = () => {
           />
         </label>
 
-        {/* Preview uploaded files */}
         {uploadedFiles.length > 0 && (
           <div className="mt-4">
             <p className="text-sm font-medium">Uploaded Images:</p>
@@ -106,7 +120,6 @@ const AdminPage: React.FC = () => {
           </div>
         )}
 
-        {/* Save button */}
         <button type="submit" className="bg-blue-500 text-white py-2 px-4 rounded">
           Save
         </button>
