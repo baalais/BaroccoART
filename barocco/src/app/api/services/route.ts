@@ -1,53 +1,42 @@
-import { NextRequest, NextResponse } from "next/server";
-import { writeFile, mkdir } from "fs/promises";
+import { NextResponse } from "next/server";
+import { promises as fs } from "fs";
 import path from "path";
 
-export async function POST(req: NextRequest) {
+// Handler for POST requests
+export async function POST(req: Request) {
   try {
     const formData = await req.formData();
+    const slug = formData.get("slug");
+    const title = formData.get("title");
+    const description = formData.get("description");
 
-    const slug = formData.get("slug") as string;
-    const files = formData.getAll("images") as File[];
-
-    // Validate slug
-    if (!slug || typeof slug !== "string") {
+    if (!slug || !title || !description) {
       return NextResponse.json(
-        { error: "Slug is required and must be a string" },
+        { error: "Missing required fields" },
         { status: 400 }
       );
     }
 
-    // Validate files
-    if (!files || files.length === 0) {
-      return NextResponse.json(
-        { error: "At least one image file is required" },
-        { status: 400 }
-      );
-    }
+    // Folder to store images based on slug
+    const uploadDir = path.join(process.cwd(), "public", "images", slug.toString());
+    await fs.mkdir(uploadDir, { recursive: true });
 
-    const folderPath = path.join(process.cwd(), "public", "images", slug);
-
-    // Create folder if it doesn't exist
-    await mkdir(folderPath, { recursive: true });
-
-    const savedFiles = [];
-    for (const file of files) {
+    const uploadedFiles = formData.getAll("images") as File[];
+    for (const file of uploadedFiles) {
       const arrayBuffer = await file.arrayBuffer();
       const buffer = Buffer.from(arrayBuffer);
-      const filePath = path.join(folderPath, file.name);
-      await writeFile(filePath, buffer);
-
-      savedFiles.push(`/images/${slug}/${file.name}`);
+      const filePath = path.join(uploadDir, file.name);
+      await fs.writeFile(filePath, buffer);
     }
 
-    return NextResponse.json({
-      message: "Files uploaded successfully!",
-      files: savedFiles,
-    });
+    // Mock saving title and description (implement database save here if needed)
+    console.log(`Service updated: ${title}, ${description}`);
+
+    return NextResponse.json({ message: "Service updated successfully" });
   } catch (error) {
-    console.error("Error saving files:", error);
+    console.error("Error processing request:", error);
     return NextResponse.json(
-      { error: "Failed to upload files" },
+      { error: "Failed to process the request" },
       { status: 500 }
     );
   }

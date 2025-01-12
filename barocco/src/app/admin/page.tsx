@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useState } from "react";
 
 const AdminPage: React.FC = () => {
@@ -13,39 +14,28 @@ const AdminPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Create form data
     const formDataToSend = new FormData();
     formDataToSend.append("slug", formData.slug);
     formDataToSend.append("title", formData.title);
     formDataToSend.append("description", formData.description);
 
-    // Validate and append files
-    uploadedFiles.forEach((file, index) => {
+    uploadedFiles.forEach((file) => {
       if (!file.type.startsWith("image/")) {
         alert(`${file.name} is not a valid image.`);
         return;
       }
-      formDataToSend.append(`images`, file); // Appending images with same key
+      formDataToSend.append("images", file);
     });
 
     try {
-      // Debugging the FormData
-      for (const [key, value] of formDataToSend.entries()) {
-        console.log(key, value);
-      }
-
       const response = await fetch("/api/services", {
         method: "POST",
         body: formDataToSend,
       });
 
       if (response.ok) {
-        const data = await response.json();
         alert("Service updated!");
-        console.log("Saved files:", data.files);
       } else {
-        const errorData = await response.json();
-        console.error("Error:", errorData);
         alert("Failed to update service.");
       }
     } catch (err) {
@@ -106,19 +96,6 @@ const AdminPage: React.FC = () => {
             className="block w-full p-2 border rounded mt-1"
           />
         </label>
-
-        {uploadedFiles.length > 0 && (
-          <div className="mt-4">
-            <p className="text-sm font-medium">Uploaded Images:</p>
-            <ul className="list-disc pl-5">
-              {uploadedFiles.map((file, index) => (
-                <li key={index} className="text-sm">
-                  {file.name}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
 
         <button type="submit" className="bg-blue-500 text-white py-2 px-4 rounded">
           Save
