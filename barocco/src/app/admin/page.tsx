@@ -1,108 +1,149 @@
 "use client";
+import React, { useState, useEffect } from "react";
 
-import React, { useState } from "react";
+const services = [
+  "privatmajas",
+  "lauksaimniecibas-ekas",
+  "razosanas-uznemumiem",
+  "uznemumiem",
+];
 
-const AdminPage: React.FC = () => {
-  const [formData, setFormData] = useState({
-    slug: "privatmajas",
-    title: "",
-    description: "",
-  });
+const AdminPanel = () => {
+  const [selectedService, setSelectedService] = useState(services[0]);
+  const [photos, setPhotos] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Fetch photos for the selected service
+  useEffect(() => {
+    const fetchPhotos = async () => {
+      setLoading(true);
+      setError(null);
 
-    const formDataToSend = new FormData();
-    formDataToSend.append("slug", formData.slug);
-    formDataToSend.append("title", formData.title);
-    formDataToSend.append("description", formData.description);
+      try {
+        const response = await fetch(`/api/photos?slug=${selectedService}`);
+        const data = await response.json();
 
-    uploadedFiles.forEach((file) => {
-      if (!file.type.startsWith("image/")) {
-        alert(`${file.name} is not a valid image.`);
-        return;
+        if (response.ok) {
+          setPhotos(data);
+        } else {
+          setError(data.error || "Failed to fetch photos.");
+        }
+      } catch (err) {
+        console.error(err);
+        setError("An unexpected error occurred.");
+      } finally {
+        setLoading(false);
       }
-      formDataToSend.append("images", file);
-    });
+    };
 
+    fetchPhotos();
+  }, [selectedService]);
+
+  // Handle photo upload
+  const handleUpload = async () => {
+    if (!file) {
+      alert("Please select a file to upload.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("slug", selectedService);
+    formData.append("photo", file);
+
+    setUploading(true);
     try {
-      const response = await fetch("/api/services", {
+      const response = await fetch("/api/uploadPhoto", {
         method: "POST",
-        body: formDataToSend,
+        body: formData,
       });
 
       if (response.ok) {
-        alert("Service updated!");
-      } else {
-        alert("Failed to update service.");
-      }
-    } catch (err) {
-      console.error("Request failed:", err);
-      alert("An error occurred. Please try again.");
-    }
-  };
+        const data = await response.json();
+        alert(data.message);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const filesArray = Array.from(e.target.files);
-      setUploadedFiles(filesArray);
+        // Refresh the photos list after upload
+        setFile(null);
+        setPhotos((prev) => [...prev, file.name]);
+      } else {
+        const data = await response.json();
+        alert(data.error || "Failed to upload photo.");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("An unexpected error occurred during upload.");
+    } finally {
+      setUploading(false);
     }
   };
 
   return (
-    <div className="flex flex-col items-center py-16 px-4">
+    <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">Admin Panel</h1>
-      <form onSubmit={handleSubmit} className="space-y-4 max-w-md w-full">
-        <label className="block text-sm font-medium">
-          Category
-          <select
-            value={formData.slug}
-            onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-            className="w-full p-2 border rounded mt-1"
-          >
-            <option value="privatmajas">Privātmājas</option>
-            <option value="lauksaimniecibas-ekas">Lauksaimniecības ēkas</option>
-            <option value="uznemumiem">Uzņēmumiem</option>
-            <option value="razosanas-uznemumiem">Ražošanas uzņēmumiem</option>
-          </select>
-        </label>
 
+      {/* Service Selection */}
+      <div className="mb-4">
+        <label htmlFor="service" className="block mb-2 font-semibold">
+          Izvēlieties kategoriju (Select a category):
+        </label>
+        <select
+          id="service"
+          value={selectedService}
+          onChange={(e) => setSelectedService(e.target.value)}
+          className="border border-gray-300 rounded p-2 w-full"
+        >
+          {services.map((service) => (
+            <option key={service} value={service}>
+              {service}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Photo Upload */}
+      <div className="mb-4">
+        <label className="block mb-2 font-semibold">
+          Augšupielādēt fotoattēlu (Upload a photo):
+        </label>
         <input
-          type="text"
-          placeholder="Title"
-          value={formData.title}
-          onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-          className="w-full p-2 border rounded"
+          type="file"
+          onChange={(e) => setFile(e.target.files ? e.target.files[0] : null)}
+          className="block w-full mb-2"
         />
-
-        <textarea
-          placeholder="Description"
-          value={formData.description}
-          onChange={(e) =>
-            setFormData({ ...formData, description: e.target.value })
-          }
-          className="w-full p-2 border rounded"
-        />
-
-        <label className="block text-sm font-medium">
-          Upload Images
-          <input
-            type="file"
-            multiple
-            accept="image/*"
-            onChange={handleFileChange}
-            className="block w-full p-2 border rounded mt-1"
-          />
-        </label>
-
-        <button type="submit" className="bg-blue-500 text-white py-2 px-4 rounded">
-          Save
+        <button
+          onClick={handleUpload}
+          className="bg-blue-500 text-white px-4 py-2 rounded"
+          disabled={uploading}
+        >
+          {uploading ? "Augšupielādē (Uploading)..." : "Augšupielādēt (Upload)"}
         </button>
-      </form>
+      </div>
+
+      {/* Photo Grid */}
+      {loading ? (
+        <p>Ielādē (Loading)...</p>
+      ) : error ? (
+        <p className="text-red-500">{error}</p>
+      ) : photos.length === 0 ? (
+        <p className="text-gray-500">Nav fotoattēlu (No photos available).</p>
+      ) : (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+          {photos.map((photo, index) => (
+            <div key={index} className="relative">
+              <img
+                src={`/images/${selectedService}/${photo}`}
+                alt={`Photo ${index + 1}`}
+                className="w-full h-auto rounded object-cover"
+              />
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
 
-export default AdminPage;
+export default AdminPanel;
