@@ -6,7 +6,7 @@ import { NextResponse } from "next/server";
 const getFolderPath = (slug: string) =>
   path.join(process.cwd(), "public", "images", slug);
 
-// GET method: Fetch photos for a specific category
+// GET handler
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const slug = searchParams.get("slug");
@@ -39,7 +39,7 @@ export async function GET(req: Request) {
   }
 }
 
-// POST method: Upload a new photo
+// POST handler
 export async function POST(req: Request) {
   const formData = await req.formData();
   const slug = formData.get("slug") as string;
@@ -73,11 +73,14 @@ export async function POST(req: Request) {
   }
 }
 
-// DELETE method: Delete a specific photo
+// DELETE handler
 export async function DELETE(req: Request) {
   const { searchParams } = new URL(req.url);
   const slug = searchParams.get("slug");
   const fileName = searchParams.get("file");
+
+  console.log("Received file name:", fileName); // Debug log
+  console.log("Received slug:", slug); // Debug log
 
   if (!slug || !fileName) {
     return NextResponse.json(
@@ -90,12 +93,28 @@ export async function DELETE(req: Request) {
     const folderPath = getFolderPath(slug);
     const filePath = path.join(folderPath, fileName);
 
+    // Ensure the file path is within the folder to avoid path traversal
+    if (!filePath.startsWith(folderPath)) {
+      return NextResponse.json(
+        { error: "Invalid file path" },
+        { status: 400 }
+      );
+    }
+
     // Delete the file
     await fs.unlink(filePath);
 
     return NextResponse.json({ message: "Photo deleted successfully" });
   } catch (error) {
     console.error("Error deleting photo:", error);
+
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      return NextResponse.json(
+        { error: "File does not exist" },
+        { status: 404 }
+      );
+    }
+
     return NextResponse.json(
       { error: "Failed to delete photo" },
       { status: 500 }
