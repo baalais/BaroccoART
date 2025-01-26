@@ -13,7 +13,7 @@ const getFolderPath = (slug?: string) => {
 // GET handler
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-  const slug = searchParams.get("slug");
+  const slug = searchParams.get("slug") || undefined; // Convert `null` to `undefined`
 
   try {
     const folderPath = getFolderPath(slug);
@@ -46,6 +46,7 @@ export async function GET(req: Request) {
     );
   }
 }
+
 
 // POST handler
 export async function POST(req: Request) {

@@ -2,53 +2,36 @@
 
 import { useEffect, useState } from "react";
 
-export default function ServicePage({ params }: { params: Promise<{ slug: string }> }) {
+export default function ServicePage({ params }: { params: { slug: string } }) {
   const [photos, setPhotos] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [slug, setSlug] = useState<string | null>(null);
-  const [serviceText, setServiceText] = useState<{ title: string; description: string }>({
+  const [serviceText, setServiceText] = useState<{
+    title: string;
+    description: string;
+  }>({
     title: "",
     description: "",
   });
 
+  // Fetch photos and set text based on slug
   useEffect(() => {
-    let isMounted = true;
+    if (!params.slug) return;
 
-    async function resolveParams() {
-      try {
-        const resolvedParams = await params;
-        if (isMounted) setSlug(resolvedParams.slug);
-      } catch (err) {
-        console.error("Error resolving params:", err);
-      }
-    }
-
-    resolveParams();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [params]);
-
-  useEffect(() => {
-    if (!slug) return;
-  
-    // Fetch images and set text based on slug
     async function fetchPhotos() {
       try {
-        const response = await fetch(`/api/photos?slug=${slug}`);
+        const response = await fetch(`/api/photos?slug=${params.slug}`);
         if (!response.ok) {
           throw new Error("Failed to fetch images");
         }
-  
-        const imageFiles = await response.json();
+
+        const imageFiles: string[] = await response.json();
         const imageUrls = imageFiles.map(
-          (file: string) => `/images/${slug}/${file}`
+          (file) => `/images/${params.slug}/${file}`
         );
         setPhotos(imageUrls);
-  
-        // Set text based on slug
-        switch (slug) {
+
+        // Set service text based on slug
+        switch (params.slug) {
           case "privatmajas":
             setServiceText({
               title: "Privātmājas",
@@ -80,27 +63,34 @@ export default function ServicePage({ params }: { params: Promise<{ slug: string
           default:
             setServiceText({
               title: "Service not found",
-              description: "Sorry, we couldn't find the details for this service.",
+              description:
+                "Atvainojiet, nevarējām atrast informāciju par šo pakalpojumu.",
             });
             break;
         }
-      } catch (err: any) {
-        console.error("Error fetching photos:", err.message);
-        setError(err.message);
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          console.error("Error fetching photos:", err.message);
+          setError(err.message);
+        } else {
+          console.error("Unexpected error:", err);
+          setError("Nezināma kļūda");
+        }
       }
     }
-  
+
     fetchPhotos();
-  }, [slug]);
-  
+  }, [params.slug]);
 
   return (
     <div className="p-6">
-      {/* Title and Description */}
-      <h1 className="text-4xl font-bold mb-4">{serviceText.title || "Loading..."}</h1>
+      {/* Pakalpojuma nosaukums un apraksts */}
+      <h1 className="text-4xl font-bold mb-4">
+        {serviceText.title || "Notiek ielāde..."}
+      </h1>
       <p className="text-lg text-gray-600 mb-6">{serviceText.description}</p>
 
-      {/* Image Grid */}
+      {/* Attēlu režģis */}
       {error ? (
         <p className="text-red-500">{error}</p>
       ) : (
@@ -109,7 +99,7 @@ export default function ServicePage({ params }: { params: Promise<{ slug: string
             <img
               key={index}
               src={photo}
-              alt={`Service image ${index + 1}`}
+              alt={`Pakalpojuma attēls ${index + 1}`}
               className="w-full h-auto rounded-lg object-cover"
             />
           ))}

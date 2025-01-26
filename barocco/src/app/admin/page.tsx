@@ -49,22 +49,27 @@ const AdminPanel = () => {
       alert("Please select a file to upload.");
       return;
     }
-
+  
+    if (!selectedService) {
+      alert("Please select a valid service category.");
+      return;
+    }
+  
     const formData = new FormData();
-    formData.append("slug", selectedService);
+    formData.append("slug", selectedService); // Ensure `selectedService` is defined
     formData.append("photo", file);
-
+  
     setUploading(true);
     try {
       const response = await fetch("/api/photos", {
         method: "POST",
         body: formData,
       });
-
+  
       if (response.ok) {
         const data = await response.json();
         alert(data.message);
-
+  
         // Refresh the photos list after upload
         setFile(null);
         setPhotos((prev) => [...prev, file.name]);
@@ -79,6 +84,7 @@ const AdminPanel = () => {
       setUploading(false);
     }
   };
+  
 
   // Handle photo delete
   const handleDelete = async (photo: string) => {
@@ -138,10 +144,13 @@ const AdminPanel = () => {
             Upload a Photo
           </label>
           <input
-            type="file"
-            onChange={(e) => setFile(e.target.files ? e.target.files[0] : null)}
-            className="block w-full border border-gray-700 bg-gray-900 text-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-          />
+  type="file"
+  onChange={(e) => {
+    const file = e.target.files && e.target.files[0]; // Ensure `file` is `File | null`
+    setFile(file || null); // Handle `undefined` by explicitly setting `null`
+  }}
+  className="block w-full border border-gray-700 bg-gray-900 text-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+/>
           <button
             onClick={handleUpload}
             className={`w-full py-3 mt-3 rounded-lg font-semibold ${
