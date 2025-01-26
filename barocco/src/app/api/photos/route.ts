@@ -2,34 +2,42 @@ import { promises as fs } from "fs";
 import path from "path";
 import { NextResponse } from "next/server";
 
-// Helper function to get the folder path for a given slug
-const getFolderPath = (slug: string) =>
-  path.join(process.cwd(), "public", "images", slug);
+// Root directory for all images
+const imagesRoot = path.join(process.cwd(), "public", "images");
+
+// Helper function to get folder path for a given slug
+const getFolderPath = (slug?: string) => {
+  return slug ? path.join(imagesRoot, slug) : imagesRoot;
+};
 
 // GET handler
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const slug = searchParams.get("slug");
 
-  if (!slug) {
-    return NextResponse.json(
-      { error: "Missing slug parameter" },
-      { status: 400 }
-    );
-  }
-
   try {
     const folderPath = getFolderPath(slug);
+    const directories = slug
+      ? [folderPath]
+      : (await fs.readdir(imagesRoot, { withFileTypes: true }))
+          .filter((entry) => entry.isDirectory())
+          .map((dir) => path.join(imagesRoot, dir.name));
 
-    // Read the directory contents
-    const files = await fs.readdir(folderPath);
+    // Gather photos from all relevant directories
+    const allPhotos = (
+      await Promise.all(
+        directories.map(async (dir) => {
+          try {
+            const files = await fs.readdir(dir);
+            return files.filter((file) => /\.(jpe?g|png|gif|webp)$/i.test(file));
+          } catch {
+            return []; // Skip folders that fail to read
+          }
+        })
+      )
+    ).flat();
 
-    // Filter image files
-    const imageFiles = files.filter((file) =>
-      /\.(jpe?g|png|gif|webp)$/i.test(file)
-    );
-
-    return NextResponse.json(imageFiles);
+    return NextResponse.json(allPhotos);
   } catch (error) {
     console.error("Error reading files:", error);
     return NextResponse.json(
@@ -76,28 +84,32 @@ export async function POST(req: Request) {
 // DELETE handler
 export async function DELETE(req: Request) {
   const { searchParams } = new URL(req.url);
-  const slug = searchParams.get("slug");
   const fileName = searchParams.get("file");
 
   console.log("Received file name:", fileName); // Debug log
-  console.log("Received slug:", slug); // Debug log
 
-  if (!slug || !fileName) {
+  if (!fileName) {
     return NextResponse.json(
-      { error: "Missing slug or file name" },
+      { error: "Missing file name" },
       { status: 400 }
     );
   }
 
   try {
-    const folderPath = getFolderPath(slug);
-    const filePath = path.join(folderPath, fileName);
+    // Look for the file across all directories
+    const directories = await fs.readdir(imagesRoot, { withFileTypes: true });
+    const folderPaths = directories
+      .filter((entry) => entry.isDirectory())
+      .map((dir) => path.join(imagesRoot, dir.name));
 
-    // Ensure the file path is within the folder to avoid path traversal
-    if (!filePath.startsWith(folderPath)) {
+    const filePath = folderPaths
+      .map((dir) => path.join(dir, fileName))
+      .find((fullPath) => fs.stat(fullPath).then(() => true).catch(() => false));
+
+    if (!filePath) {
       return NextResponse.json(
-        { error: "Invalid file path" },
-        { status: 400 }
+        { error: "File does not exist" },
+        { status: 404 }
       );
     }
 
@@ -107,14 +119,6 @@ export async function DELETE(req: Request) {
     return NextResponse.json({ message: "Photo deleted successfully" });
   } catch (error) {
     console.error("Error deleting photo:", error);
-
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-      return NextResponse.json(
-        { error: "File does not exist" },
-        { status: 404 }
-      );
-    }
-
     return NextResponse.json(
       { error: "Failed to delete photo" },
       { status: 500 }

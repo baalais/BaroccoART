@@ -15,7 +15,7 @@ const AdminPanel = () => {
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [file, setFile] = useState<File | null>(null);
-  const [deleting, setDeleting] = useState<string | null>(null); // Track photo being deleted
+  const [deleting, setDeleting] = useState<string | null>(null);
 
   // Fetch photos for the selected service
   useEffect(() => {
@@ -83,12 +83,13 @@ const AdminPanel = () => {
   // Handle photo delete
   const handleDelete = async (photo: string) => {
     if (!window.confirm("Are you sure you want to delete this photo?")) return;
-  
+
+    setDeleting(photo);
     try {
       const response = await fetch(`/api/photos?file=${encodeURIComponent(photo)}`, {
         method: "DELETE",
       });
-  
+
       if (response.ok) {
         alert("Photo deleted successfully.");
         setPhotos((prev) => prev.filter((p) => p !== photo)); // Remove photo from state
@@ -99,8 +100,10 @@ const AdminPanel = () => {
     } catch (error) {
       console.error(error);
       alert("An unexpected error occurred during deletion.");
+    } finally {
+      setDeleting(null);
     }
-  };  
+  };
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-6">
