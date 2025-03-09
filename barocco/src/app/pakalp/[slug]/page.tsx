@@ -2,95 +2,85 @@
 
 import { useEffect, useState } from "react";
 
-export default function ServicePage({ params }: { params: { slug: string } }) {
+type ServicePageProps = {
+  params: Promise<{ slug: string }>;
+};
+
+export default function ServicePage({ params }: ServicePageProps) {
   const [photos, setPhotos] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [serviceText, setServiceText] = useState<{
-    title: string;
-    description: string;
-  }>({
+  const [serviceText, setServiceText] = useState({
     title: "",
     description: "",
   });
 
-  // Fetch photos and set text based on slug
   useEffect(() => {
-    if (!params.slug) return;
-
-    async function fetchPhotos() {
+    async function fetchData() {
       try {
-        const response = await fetch(`/api/photos?slug=${params.slug}`);
+        const resolvedParams = await params; // Await the promise for `params`
+        if (!resolvedParams.slug) return;
+
+        const response = await fetch(`/api/photos?slug=${resolvedParams.slug}`);
         if (!response.ok) {
           throw new Error("Failed to fetch images");
         }
 
         const imageFiles: string[] = await response.json();
         const imageUrls = imageFiles.map(
-          (file) => `/images/${params.slug}/${file}`
+          (file) => `/images/${resolvedParams.slug}/${file}`
         );
         setPhotos(imageUrls);
 
-        // Set service text based on slug
-        switch (params.slug) {
+        switch (resolvedParams.slug) {
           case "privatmajas":
             setServiceText({
               title: "Privātmājas",
-              description:
-                "Teksts par privātmājām teksts par privātmājām teksts par privātmājām teksts par privātmājām",
+              description: "Teksts par privātmājām...",
             });
             break;
           case "lauksaimniecibas-ekas":
             setServiceText({
               title: "Lauksaimniecības",
-              description:
-                "Teksts par lauksaimniecību teksts par lauksaimniecību teksts par citu lauksaimniecību",
+              description: "Teksts par lauksaimniecību...",
             });
             break;
           case "razosanas-uznemumiem":
             setServiceText({
               title: "Ražošanas uzņēmumiem",
-              description:
-                "Teksts par ražošanas uzņēmumiem teksts par ražošanas uzņēmumiem teksts par ražošanas uzņēmumiem",
+              description: "Teksts par ražošanas uzņēmumiem...",
             });
             break;
           case "uznemumiem":
             setServiceText({
               title: "Uzņēmumiem",
-              description:
-                "Teksts par uzņēmumiem teksts par uzņēmumiem teksts par uzņēmumiem",
+              description: "Teksts par uzņēmumiem...",
             });
             break;
           default:
             setServiceText({
               title: "Service not found",
-              description:
-                "Atvainojiet, nevarējām atrast informāciju par šo pakalpojumu.",
+              description: "Atvainojiet, nevarējām atrast informāciju.",
             });
-            break;
         }
-      } catch (err: unknown) {
+      } catch (err) {
         if (err instanceof Error) {
-          console.error("Error fetching photos:", err.message);
           setError(err.message);
         } else {
-          console.error("Unexpected error:", err);
           setError("Nezināma kļūda");
         }
       }
     }
 
-    fetchPhotos();
-  }, [params.slug]);
+    fetchData();
+  }, [params]);
 
   return (
     <div className="p-6">
-      {/* Pakalpojuma nosaukums un apraksts */}
       <h1 className="text-4xl font-bold mb-4">
         {serviceText.title || "Notiek ielāde..."}
       </h1>
       <p className="text-lg text-gray-600 mb-6">{serviceText.description}</p>
 
-      {/* Attēlu režģis */}
       {error ? (
         <p className="text-red-500">{error}</p>
       ) : (

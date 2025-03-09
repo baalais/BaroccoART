@@ -1,5 +1,6 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import Image from 'next/image';
 
 const services = [
   "privatmajas",
@@ -7,6 +8,12 @@ const services = [
   "razosanas-uznemumiem",
   "uznemumiem",
 ];
+
+// Define the response data type for fetch
+interface FetchResponse {
+  error?: string;
+  photos?: string[];
+}
 
 const AdminPanel = () => {
   const [selectedService, setSelectedService] = useState(services[0]);
@@ -18,30 +25,30 @@ const AdminPanel = () => {
   const [deleting, setDeleting] = useState<string | null>(null);
 
   // Fetch photos for the selected service
-  useEffect(() => {
-    const fetchPhotos = async () => {
-      setLoading(true);
-      setError(null);
+  const fetchPhotos = useCallback(async () => {
+    setLoading(true);
+    setError(null);
 
-      try {
-        const response = await fetch(`/api/photos?slug=${selectedService}`);
-        const data = await response.json();
+    try {
+      const response = await fetch(`/api/photos?slug=${selectedService}`);
+      const data: FetchResponse = await response.json();
 
-        if (response.ok) {
-          setPhotos(data);
-        } else {
-          setError(data.error || "Failed to fetch photos.");
-        }
-      } catch (err) {
-        console.error(err);
-        setError("An unexpected error occurred.");
-      } finally {
-        setLoading(false);
+      if (response.ok) {
+        setPhotos(data.photos ?? []); // Use `??` to check for null/undefined values
+      } else {
+        setError(data.error ?? "Failed to fetch photos.");
       }
-    };
-
-    fetchPhotos();
+    } catch (err) {
+      console.error(err);
+      setError("An unexpected error occurred.");
+    } finally {
+      setLoading(false);
+    }
   }, [selectedService]);
+
+  useEffect(() => {
+    fetchPhotos();
+  }, [selectedService, fetchPhotos]);
 
   // Handle photo upload
   const handleUpload = async () => {
@@ -56,7 +63,7 @@ const AdminPanel = () => {
     }
   
     const formData = new FormData();
-    formData.append("slug", selectedService); // Ensure `selectedService` is defined
+    formData.append("slug", selectedService);
     formData.append("photo", file);
   
     setUploading(true);
@@ -66,16 +73,13 @@ const AdminPanel = () => {
         body: formData,
       });
   
+      const data: FetchResponse = await response.json(); // Correctly type `data`
       if (response.ok) {
-        const data = await response.json();
-        alert(data.message);
-  
-        // Refresh the photos list after upload
+        alert("Photo uploaded successfully.");
         setFile(null);
-        setPhotos((prev) => [...prev, file.name]);
+        await fetchPhotos(); // Ensure the promise is awaited
       } else {
-        const data = await response.json();
-        alert(data.error || "Failed to upload photo.");
+        alert(data.error ?? "Failed to upload photo.");
       }
     } catch (error) {
       console.error(error);
@@ -83,8 +87,7 @@ const AdminPanel = () => {
     } finally {
       setUploading(false);
     }
-  };
-  
+  };  
 
   // Handle photo delete
   const handleDelete = async (photo: string) => {
@@ -98,10 +101,10 @@ const AdminPanel = () => {
 
       if (response.ok) {
         alert("Photo deleted successfully.");
-        setPhotos((prev) => prev.filter((p) => p !== photo)); // Remove photo from state
+        setPhotos((prev) => prev.filter((p) => p !== photo));
       } else {
-        const data = await response.json();
-        alert(data.error || "Failed to delete photo.");
+        const data: FetchResponse = await response.json();
+        alert(data.error ?? "Failed to delete photo.");
       }
     } catch (error) {
       console.error(error);
@@ -144,13 +147,13 @@ const AdminPanel = () => {
             Upload a Photo
           </label>
           <input
-  type="file"
-  onChange={(e) => {
-    const file = e.target.files && e.target.files[0]; // Ensure `file` is `File | null`
-    setFile(file || null); // Handle `undefined` by explicitly setting `null`
-  }}
-  className="block w-full border border-gray-700 bg-gray-900 text-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-/>
+            type="file"
+            onChange={(e) => {
+              const file = e.target.files?.[0] ?? null;
+              setFile(file);
+            }}
+            className="block w-full border border-gray-700 bg-gray-900 text-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+          />
           <button
             onClick={handleUpload}
             className={`w-full py-3 mt-3 rounded-lg font-semibold ${
@@ -178,9 +181,11 @@ const AdminPanel = () => {
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
               {photos.map((photo, index) => (
                 <div key={index} className="relative group">
-                  <img
+                  <Image
                     src={`/images/${selectedService}/${photo}`}
                     alt={`Photo ${index + 1}`}
+                    width={500}
+                    height={200}
                     className="w-full h-40 object-cover rounded-lg shadow-md"
                   />
                   <button

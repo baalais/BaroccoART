@@ -50,26 +50,23 @@ export async function GET(req: Request) {
 
 // POST handler
 export async function POST(req: Request) {
-  const formData = await req.formData();
-  const slug = formData.get("slug") as string;
-  const photo = formData.get("photo") as File;
-
-  if (!slug || !photo) {
-    return NextResponse.json(
-      { error: "Missing slug or photo file" },
-      { status: 400 }
-    );
-  }
-
   try {
-    const folderPath = getFolderPath(slug);
+    const formData = await req.formData();
+    const slug = formData.get("slug") as string;
+    const photo = formData.get("photo") as File;
 
-    // Ensure the folder exists
+    if (!slug || !photo) {
+      return NextResponse.json(
+        { error: "Missing slug or photo file" },
+        { status: 400 }
+      );
+    }
+
+    const folderPath = path.join(process.cwd(), "public", "images", slug);
     await fs.mkdir(folderPath, { recursive: true });
 
-    // Save the uploaded file
-    const filePath = path.join(folderPath, photo.name);
     const fileBuffer = Buffer.from(await photo.arrayBuffer());
+    const filePath = path.join(folderPath, photo.name);
     await fs.writeFile(filePath, fileBuffer);
 
     return NextResponse.json({ message: "Photo uploaded successfully" });
@@ -82,47 +79,45 @@ export async function POST(req: Request) {
   }
 }
 
+
 // DELETE handler
 export async function DELETE(req: Request) {
   const { searchParams } = new URL(req.url);
   const fileName = searchParams.get("file");
 
-  console.log("Received file name:", fileName); // Debug log
-
   if (!fileName) {
-    return NextResponse.json(
-      { error: "Missing file name" },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "Missing file name" }, { status: 400 });
   }
 
   try {
-    // Look for the file across all directories
+    // Look for the file in all directories
     const directories = await fs.readdir(imagesRoot, { withFileTypes: true });
     const folderPaths = directories
       .filter((entry) => entry.isDirectory())
       .map((dir) => path.join(imagesRoot, dir.name));
 
-    const filePath = folderPaths
-      .map((dir) => path.join(dir, fileName))
-      .find((fullPath) => fs.stat(fullPath).then(() => true).catch(() => false));
-
-    if (!filePath) {
-      return NextResponse.json(
-        { error: "File does not exist" },
-        { status: 404 }
-      );
+    let filePath: string | undefined;
+    
+    for (const dir of folderPaths) {
+      const possiblePath = path.join(dir, fileName);
+      try {
+        await fs.access(possiblePath);
+        filePath = possiblePath;
+        break;
+      } catch (err) {
+        // File does not exist in this directory
+      }
     }
 
-    // Delete the file
+    if (!filePath) {
+      return NextResponse.json({ error: "File does not exist" }, { status: 404 });
+    }
+
     await fs.unlink(filePath);
 
     return NextResponse.json({ message: "Photo deleted successfully" });
   } catch (error) {
     console.error("Error deleting photo:", error);
-    return NextResponse.json(
-      { error: "Failed to delete photo" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to delete photo" }, { status: 500 });
   }
 }
