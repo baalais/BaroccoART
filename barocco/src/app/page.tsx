@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import React from "react";
 import { useRouter } from "next/navigation";
 
@@ -17,8 +17,8 @@ const Home: React.FC = () => {
   };
 
   return (
-    <div className="flex items-center justify-center">
-      <div className="grid grid-cols-2 gap-8 max-w-4xl">
+    <div className="flex items-center justify-center p-4 bg-white dark:bg-black pt-24 pb-32">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-4xl w-full">
         {images.map((image, index) => (
           <div
             key={index}

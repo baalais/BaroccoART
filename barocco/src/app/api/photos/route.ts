@@ -13,7 +13,7 @@ const getFolderPath = (slug?: string) => {
 // GET handler
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-  const slug = searchParams.get("slug") ?? undefined; // Convert `null` to `undefined`
+  const slug = searchParams.get("slug") ?? undefined;
 
   try {
     const folderPath = getFolderPath(slug);
@@ -23,7 +23,6 @@ export async function GET(req: Request) {
           .filter((entry) => entry.isDirectory())
           .map((dir) => path.join(imagesRoot, dir.name));
 
-    // Gather photos from all relevant directorieswwww
     const allPhotos = (
       await Promise.all(
         directories.map(async (dir) => {
@@ -31,13 +30,14 @@ export async function GET(req: Request) {
             const files = await fs.readdir(dir);
             return files.filter((file) => /\.(jpe?g|png|gif|webp)$/i.test(file));
           } catch {
-            return []; // Skip folders that fail to read
+            return [];
           }
         })
       )
     ).flat();
 
-    return NextResponse.json(allPhotos);
+    // Return an object with a `photos` property
+    return NextResponse.json({ photos: allPhotos });
   } catch (error) {
     console.error("Error reading files:", error);
     return NextResponse.json(
@@ -46,7 +46,6 @@ export async function GET(req: Request) {
     );
   }
 }
-
 
 // POST handler
 export async function POST(req: Request) {
@@ -79,7 +78,6 @@ export async function POST(req: Request) {
   }
 }
 
-
 // DELETE handler
 export async function DELETE(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -97,7 +95,7 @@ export async function DELETE(req: Request) {
       .map((dir) => path.join(imagesRoot, dir.name));
 
     let filePath: string | undefined;
-    
+
     for (const dir of folderPaths) {
       const possiblePath = path.join(dir, fileName);
       try {
@@ -118,6 +116,9 @@ export async function DELETE(req: Request) {
     return NextResponse.json({ message: "Photo deleted successfully" });
   } catch (error) {
     console.error("Error deleting photo:", error);
-    return NextResponse.json({ error: "Failed to delete photo" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to delete photo" },
+      { status: 500 }
+    );
   }
 }

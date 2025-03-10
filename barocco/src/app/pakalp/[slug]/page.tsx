@@ -27,11 +27,14 @@ const ServicePage = ({ params }: ServicePageProps) => {
           throw new Error("Failed to fetch photos");
         }
 
-        // Explicitly type the response data as an array of strings
-        const photosData: string[] = await photosResponse.json() as string[];
+        // Parse the response as JSON and extract the `photos` array
+        const photosData = await photosResponse.json();
+        if (!Array.isArray(photosData.photos)) {
+          throw new Error("Invalid photos data format");
+        }
 
         // Map the photo filenames to their full URLs
-        const photoUrls = photosData.map((photo) => `/images/${resolvedParams.slug}/${photo}`);
+        const photoUrls = photosData.photos.map((photo: string) => `/images/${resolvedParams.slug}/${photo}`);
         setPhotos(photoUrls);
 
         // Set service text based on the slug
@@ -47,25 +50,53 @@ const ServicePage = ({ params }: ServicePageProps) => {
   }, [params]);
 
   return (
-    <div className="p-6 max-w-7xl mx-auto"> {/* Center the content and add max-width */}
+    <div className="p-6 max-w-7xl mx-auto bg-white dark:bg-black text-black dark:text-white">
       <h1 className="text-4xl font-bold mb-4 text-center">{serviceText.title}</h1>
-      <p className="text-lg text-gray-600 mb-6 text-center">{serviceText.description}</p>
+      <p className="text-lg text-gray-600 dark:text-gray-400 mb-6 text-center">
+        {serviceText.description}
+      </p>
       {error ? (
         <p className="text-red-500 text-center">{error}</p>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 px-4"> {/* Add padding on sides */}
-          {photos.map((photo, index) => (
-            <div
-              key={index}
-              className="relative rounded-lg overflow-hidden"
-            >
-              <img
-                src={photo}
-                alt={`Service photo ${index + 1}`}
-                className="w-full h-48 object-cover"
-              />
-            </div>
-          ))}
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+          {/* Row 1 */}
+          <div className="sm:col-span-2 lg:col-span-2 lg:row-span-2">
+            <img
+              src={photos[0] || "/placeholder.jpg"} // Use the first photo or a placeholder
+              alt="Large Image"
+              className="w-full h-full object-cover"
+            />
+          </div>
+          <div className="sm:col-span-2 lg:col-span-2">
+            <img
+              src={photos[1] || "/placeholder.jpg"} // Use the second photo or a placeholder
+              alt="Small Image"
+              className="w-full h-full object-cover"
+            />
+          </div>
+
+          {/* Row 2 */}
+          <div>
+            <img
+              src={photos[2] || "/placeholder.jpg"} // Use the third photo or a placeholder
+              alt="Small Image"
+              className="w-full h-full object-cover"
+            />
+          </div>
+          <div>
+            <img
+              src={photos[3] || "/placeholder.jpg"} // Use the fourth photo or a placeholder
+              alt="Small Image"
+              className="w-full h-full object-cover"
+            />
+          </div>
+          <div className="sm:col-span-2 lg:col-span-2">
+            <img
+              src={photos[4] || "/placeholder.jpg"} // Use the fifth photo or a placeholder
+              alt="Large Image"
+              className="w-full h-full object-cover"
+            />
+          </div>
         </div>
       )}
     </div>

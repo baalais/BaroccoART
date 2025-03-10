@@ -25,7 +25,7 @@ const ServiceSection: React.FC = () => {
   ];
 
   return (
-    <div className="flex flex-col items-center justify-center bg-black text-white py-16 px-4">
+    <div className="flex flex-col items-center justify-center bg-white dark:bg-black text-black dark:text-white py-16 px-4">
       <h1 className="text-2xl font-bold mb-8 text-center">
         Pilns projektēšanas pakalpojumu serviss.
       </h1>
@@ -40,14 +40,12 @@ const ServiceSection: React.FC = () => {
               alt={service.title}
               className="w-full h-48 object-cover transition-transform duration-300 transform group-hover:scale-105"
             />
-            <div className="p-4">
+            <div className="p-4 bg-white dark:bg-black">
               <h2 className="text-lg font-bold text-yellow-400">{service.title}</h2>
-              <p className="text-sm mt-2">{service.text}</p>
+              <p className="text-sm mt-2 text-black dark:text-white">{service.text}</p>
             </div>
           </div>
         ))}
-      </div>
-      <div className="mt-8">
       </div>
     </div>
   );
