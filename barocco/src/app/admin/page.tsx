@@ -16,11 +16,11 @@ interface FetchResponse {
 }
 
 const AdminPanel = () => {
-  const [selectedService, setSelectedService] = useState(services[0]);
+  const [selectedService, setSelectedService] = useState<string>(services[0] ?? "privatmajas");
   const [photos, setPhotos] = useState<string[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [uploading, setUploading] = useState(false);
+  const [uploading, setUploading] = useState<boolean>(false);
   const [file, setFile] = useState<File | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
 
@@ -28,13 +28,13 @@ const AdminPanel = () => {
   const fetchPhotos = useCallback(async () => {
     setLoading(true);
     setError(null);
-
+  
     try {
       const response = await fetch(`/api/photos?slug=${selectedService}`);
-      const data: FetchResponse = await response.json();
-
+      const data = await response.json() as FetchResponse;
+  
       if (response.ok) {
-        setPhotos(data.photos ?? []); // Use `??` to check for null/undefined values
+        setPhotos(data.photos ?? []);
       } else {
         setError(data.error ?? "Failed to fetch photos.");
       }
@@ -47,7 +47,7 @@ const AdminPanel = () => {
   }, [selectedService]);
 
   useEffect(() => {
-    fetchPhotos();
+    void fetchPhotos();
   }, [selectedService, fetchPhotos]);
 
   // Handle photo upload
@@ -73,21 +73,21 @@ const AdminPanel = () => {
         body: formData,
       });
   
-      const data: FetchResponse = await response.json(); // Correctly type `data`
+      const data = await response.json() as FetchResponse;
       if (response.ok) {
         alert("Photo uploaded successfully.");
         setFile(null);
-        await fetchPhotos(); // Ensure the promise is awaited
+        await fetchPhotos();
       } else {
         alert(data.error ?? "Failed to upload photo.");
       }
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error(err);
       alert("An unexpected error occurred during upload.");
     } finally {
       setUploading(false);
     }
-  };  
+  };
 
   // Handle photo delete
   const handleDelete = async (photo: string) => {
@@ -99,15 +99,15 @@ const AdminPanel = () => {
         method: "DELETE",
       });
 
+      const data = await response.json() as FetchResponse;
       if (response.ok) {
         alert("Photo deleted successfully.");
         setPhotos((prev) => prev.filter((p) => p !== photo));
       } else {
-        const data: FetchResponse = await response.json();
         alert(data.error ?? "Failed to delete photo.");
       }
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error(err);
       alert("An unexpected error occurred during deletion.");
     } finally {
       setDeleting(null);
@@ -130,7 +130,7 @@ const AdminPanel = () => {
           <select
             id="service"
             value={selectedService}
-            onChange={(e) => setSelectedService(e.target.value)}
+            onChange={(e) => setSelectedService(e.target.value ?? services[0])}
             className="w-full border border-gray-700 bg-gray-900 text-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none"
           >
             {services.map((service) => (
@@ -148,10 +148,7 @@ const AdminPanel = () => {
           </label>
           <input
             type="file"
-            onChange={(e) => {
-              const file = e.target.files?.[0] ?? null;
-              setFile(file);
-            }}
+            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
             className="block w-full border border-gray-700 bg-gray-900 text-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none"
           />
           <button

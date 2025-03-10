@@ -13,7 +13,7 @@ const getFolderPath = (slug?: string) => {
 // GET handler
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-  const slug = searchParams.get("slug") || undefined; // Convert `null` to `undefined`
+  const slug = searchParams.get("slug") ?? undefined; // Convert `null` to `undefined`
 
   try {
     const folderPath = getFolderPath(slug);
@@ -23,7 +23,7 @@ export async function GET(req: Request) {
           .filter((entry) => entry.isDirectory())
           .map((dir) => path.join(imagesRoot, dir.name));
 
-    // Gather photos from all relevant directories
+    // Gather photos from all relevant directorieswwww
     const allPhotos = (
       await Promise.all(
         directories.map(async (dir) => {

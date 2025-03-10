@@ -2,13 +2,12 @@ import { NextResponse } from "next/server";
 import { promises as fs } from "fs";
 import path from "path";
 
-// Handler for POST requests
 export async function POST(req: Request) {
   try {
     const formData = await req.formData();
-    const slug = formData.get("slug");
-    const title = formData.get("title");
-    const description = formData.get("description");
+    const slug = formData.get("slug") as string | null;
+    const title = formData.get("title") as string | null;
+    const description = formData.get("description") as string | null;
 
     if (!slug || !title || !description) {
       return NextResponse.json(
@@ -17,8 +16,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // Folder to store images based on slug
-    const uploadDir = path.join(process.cwd(), "public", "images", slug.toString());
+    const uploadDir = path.join(process.cwd(), "public", "images", slug);
     await fs.mkdir(uploadDir, { recursive: true });
 
     const uploadedFiles = formData.getAll("images") as File[];
@@ -29,7 +27,6 @@ export async function POST(req: Request) {
       await fs.writeFile(filePath, buffer);
     }
 
-    // Mock saving title and description (implement database save here if needed)
     console.log(`Service updated: ${title}, ${description}`);
 
     return NextResponse.json({ message: "Service updated successfully" });
