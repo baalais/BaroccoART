@@ -87,14 +87,14 @@ const Header: React.FC = () => {
               </svg>
             </button>
             <Link
-              href="/contact"
+              href="/kontakti"
               className="text-lg hover:underline text-black dark:text-white"
               onClick={closeMenu}
             >
               Kontakti
             </Link>
             <Link
-              href="/services"
+              href="/pakalpojumi"
               className="text-lg hover:underline text-black dark:text-white"
               onClick={closeMenu}
             >
