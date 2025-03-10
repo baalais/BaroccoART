@@ -1,6 +1,14 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import Image from "next/image";
 
+// Define the response data type for the API
+interface FetchResponse {
+  photos?: string[];
+  error?: string;
+}
+
+// Define the props type
 type ServicePageProps = {
   params: Promise<{ slug: string }>; // `params` is defined as a Promise
 };
@@ -28,13 +36,15 @@ const ServicePage = ({ params }: ServicePageProps) => {
         }
 
         // Parse the response as JSON and extract the `photos` array
-        const photosData = await photosResponse.json();
+        const photosData = (await photosResponse.json()) as FetchResponse;
         if (!Array.isArray(photosData.photos)) {
           throw new Error("Invalid photos data format");
         }
 
         // Map the photo filenames to their full URLs
-        const photoUrls = photosData.photos.map((photo: string) => `/images/${resolvedParams.slug}/${photo}`);
+        const photoUrls = photosData.photos.map(
+          (photo: string) => `/images/${resolvedParams.slug}/${photo}`
+        );
         setPhotos(photoUrls);
 
         // Set service text based on the slug
@@ -61,39 +71,49 @@ const ServicePage = ({ params }: ServicePageProps) => {
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
           {/* Row 1 */}
           <div className="sm:col-span-2 lg:col-span-2 lg:row-span-2">
-            <img
-              src={photos[0] || "/placeholder.jpg"} // Use the first photo or a placeholder
+            <Image
+              src={photos[0] ?? "/placeholder.jpg"} // Use the first photo or a placeholder
               alt="Large Image"
+              width={500}
+              height={300}
               className="w-full h-full object-cover"
             />
           </div>
           <div className="sm:col-span-2 lg:col-span-2">
-            <img
-              src={photos[1] || "/placeholder.jpg"} // Use the second photo or a placeholder
+            <Image
+              src={photos[1] ?? "/placeholder.jpg"} // Use the second photo or a placeholder
               alt="Small Image"
+              width={500}
+              height={300}
               className="w-full h-full object-cover"
             />
           </div>
 
           {/* Row 2 */}
           <div>
-            <img
-              src={photos[2] || "/placeholder.jpg"} // Use the third photo or a placeholder
+            <Image
+              src={photos[2] ?? "/placeholder.jpg"} // Use the third photo or a placeholder
               alt="Small Image"
+              width={500}
+              height={300}
               className="w-full h-full object-cover"
             />
           </div>
           <div>
-            <img
-              src={photos[3] || "/placeholder.jpg"} // Use the fourth photo or a placeholder
+            <Image
+              src={photos[3] ?? "/placeholder.jpg"} // Use the fourth photo or a placeholder
               alt="Small Image"
+              width={500}
+              height={300}
               className="w-full h-full object-cover"
             />
           </div>
           <div className="sm:col-span-2 lg:col-span-2">
-            <img
-              src={photos[4] || "/placeholder.jpg"} // Use the fifth photo or a placeholder
+            <Image
+              src={photos[4] ?? "/placeholder.jpg"} // Use the fifth photo or a placeholder
               alt="Large Image"
+              width={500}
+              height={300}
               className="w-full h-full object-cover"
             />
           </div>
@@ -107,15 +127,15 @@ const ServicePage = ({ params }: ServicePageProps) => {
 const getServiceText = (slug: string) => {
   switch (slug) {
     case "privatmajas":
-      return { title: "Privātmājas", description: "Description about private homes..." };
+      return { title: "Privātmājas", description: "Apraksts par privātmājām..." };
     case "lauksaimniecibas-ekas":
-      return { title: "Lauksaimniecības", description: "Description about agriculture..." };
+      return { title: "Lauksaimniecības", description: "Apraksts par lauksaimniecību..." };
     case "razosanas-uznemumiem":
-      return { title: "Ražošanas uzņēmumiem", description: "Description about production companies..." };
+      return { title: "Ražošanas uzņēmumiem", description: "Apraksts par ražošanas uzņēmumiem..." };
     case "uznemumiem":
-      return { title: "Uzņēmumiem", description: "Description about businesses..." };
+      return { title: "Uzņēmumiem", description: "Apraksts par uzņēmumiem..." };
     default:
-      return { title: "Service not found", description: "Sorry, no data available." };
+      return { title: "Pakalpojums nav atrasts", description: "Diemžēl dati nav pieejami." };
   }
 };
 

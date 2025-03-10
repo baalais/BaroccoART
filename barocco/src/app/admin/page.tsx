@@ -140,26 +140,26 @@ const AdminPanel = () => {
   };
 
   if (!isAuthenticated) {
-    return <p className="text-center text-gray-400">Redirecting to login...</p>;
+    return <p className="text-center text-gray-400">Pārvieto uz pieteikšanos...</p>;
   }
 
   return (
     <div className="min-h-screen bg-white dark:bg-black text-black dark:text-white p-6">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold text-center mb-6">Admin Panel</h1>
+        <h1 className="text-3xl font-bold text-center mb-6">Admin panelis</h1>
 
         {/* Logout Button */}
         <button
           onClick={handleLogout}
           className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 mb-6"
         >
-          Logout
+          Izrakstīties
         </button>
 
         {/* Service Selection */}
         <div className="mb-6">
           <label htmlFor="service" className="block text-lg font-medium mb-2">
-            Select Category
+            Izvēlies kategoriju
           </label>
           <select
             id="service"
@@ -178,7 +178,7 @@ const AdminPanel = () => {
         {/* Photo Upload */}
         <div className="mb-6">
           <label className="block text-lg font-medium mb-2">
-            Upload a Photo
+            Augšupielādē bildiww
           </label>
           <input
             type="file"
@@ -201,12 +201,12 @@ const AdminPanel = () => {
         {/* Photo Grid */}
         <div>
           {loading ? (
-            <p className="text-center text-gray-400">Loading photos...</p>
+            <p className="text-center text-gray-400">Ielādē bildes...</p>
           ) : error ? (
             <p className="text-center text-red-500">{error}</p>
           ) : photos.length === 0 ? (
             <p className="text-center text-gray-400">
-              No photos available for this category.
+              Nav pieejamu bilžu šai kategorijai.
             </p>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">

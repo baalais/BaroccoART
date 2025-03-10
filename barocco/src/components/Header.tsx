@@ -27,10 +27,10 @@ const Header: React.FC = () => {
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex space-x-6">
-          <Link href="/contact" className="text-lg hover:underline text-black dark:text-white">
+          <Link href="/kontakti" className="text-lg hover:underline text-black dark:text-white">
             Kontakti
           </Link>
-          <Link href="/services" className="text-lg hover:underline text-black dark:text-white">
+          <Link href="/pakalpojumi" className="text-lg hover:underline text-black dark:text-white">
             Pakalpojumi
           </Link>
           <button

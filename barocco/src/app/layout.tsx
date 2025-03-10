@@ -6,7 +6,7 @@ import { ThemeProvider } from "./context/ThemeContext";
 
 export const metadata = {
   title: "Barocco Art",
-  description: "Created by Baalais",
+  description: "Izveidoja Baalais",
   icons: [{ rel: "icon", url: "/favicon.ico" }],
 };
 
